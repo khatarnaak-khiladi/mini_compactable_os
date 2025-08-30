@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My OS - Authentication</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .window {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 420px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .window-header {
+            background: linear-gradient(90deg, #f5f5f5, #e5e5e5);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            cursor: move;
+        }
+
+        .window-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .control-btn {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn { background: linear-gradient(135deg, #ff5f56, #ff3b30); }
+        .minimize-btn { background: linear-gradient(135deg, #ffbd2e, #ff9500); }
+        .maximize-btn { background: linear-gradient(135deg, #27ca3f, #32d74b); }
+
+        .window-content {
+            padding: 40px;
+            position: relative;
+        }
+
+        .panda-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+        }
+
+        .panda {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        .panda-face {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            border: 2px solid #333;
+        }
+
+        .panda-ear {
+            width: 20px;
+            height: 20px;
+            background: #333;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .panda-ear.left { top: 5px; left: 15px; }
+        .panda-ear.right { top: 5px; right: 15px; }
+
+        .panda-eye {
+            width: 12px;
+            height: 12px;
+            background: #333;
+            border-radius: 50%;
+            position: absolute;
+            top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .panda-eye.left { left: 18px; }
+        .panda-eye.right { right: 18px; }
+
+        .panda-eye-white {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+        }
+
+        .panda-nose {
+            width: 6px;
+            height: 6px;
+            background: #333;
+            border-radius: 50%;
+            position: absolute;
+            top: 30px;
+            left: 27px;
+        }
+
+        .panda-mouth {
+            width: 12px;
+            height: 6px;
+            border: 2px solid #333;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            position: absolute;
+            top: 38px;
+            left: 24px;
+        }
+
+        .panda-hand {
+            width: 25px;
+            height: 25px;
+            background: #333;
+            border-radius: 50%;
+            position: absolute;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .panda-hand.left {
+            top: 15px;
+            left: 8px;
+            transform: rotate(-20deg);
+        }
+
+        .panda-hand.right {
+            top: 15px;
+            right: 8px;
+            transform: rotate(20deg);
+        }
+
+        .panda.covering-eyes .panda-hand { opacity: 1; }
+        .panda.covering-eyes .panda-eye { opacity: 0; }
+
+        .auth-form {
+            max-width: 300px;
+            transition: all 0.3s ease;
+        }
+
+        .form-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .form-subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .mode-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+            position: relative;
+            opacity: 1;
+            max-height: 100px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group.hidden {
+            opacity: 0;
+            max-height: 0;
+            margin-bottom: 0;
+            overflow: hidden;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message, .success-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            transition: all 0.3s ease;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .success-message {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .password-strength {
+            margin-top: 8px;
+            font-size: 12px;
+            opacity: 1;
+            max-height: 50px;
+            transition: all 0.3s ease;
+        }
+
+        .password-strength.hidden {
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .strength-bar {
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .strength-weak .strength-fill {
+            width: 33%;
+            background: #f44336;
+        }
+
+        .strength-medium .strength-fill {
+            width: 66%;
+            background: #ff9800;
+        }
+
+        .strength-strong .strength-fill {
+            width: 100%;
+            background: #4caf50;
+        }
+
+        .floating-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-particles"></div>
+    
+    <div class="window" id="authWindow">
+        <div class="window-header">
+            <div class="window-title" id="windowTitle">My OS - Authentication</div>
+            <div class="window-controls">
+                <button class="control-btn close-btn" onclick="closeWindow()"></button>
+                <button class="control-btn minimize-btn" onclick="minimizeWindow()"></button>
+                <button class="control-btn maximize-btn" onclick="maximizeWindow()"></button>
+            </div>
+        </div>
+        
+        <div class="window-content">
+            <div class="panda-container">
+                <div class="panda" id="panda">
+                    <div class="panda-ear left"></div>
+                    <div class="panda-ear right"></div>
+                    <div class="panda-face">
+                        <div class="panda-eye left">
+                            <div class="panda-eye-white"></div>
+                        </div>
+                        <div class="panda-eye right">
+                            <div class="panda-eye-white"></div>
+                        </div>
+                        <div class="panda-nose"></div>
+                        <div class="panda-mouth"></div>
+                    </div>
+                    <div class="panda-hand left"></div>
+                    <div class="panda-hand right"></div>
+                </div>
+            </div>
+
+            <div class="auth-form">
+                <h1 class="form-title" id="formTitle">Welcome Back</h1>
+                <p class="form-subtitle" id="formSubtitle">Sign in to access your desktop</p>
+                
+                <!-- Mode Toggle -->
+                <div class="mode-toggle">
+                    <button class="mode-btn active" id="loginModeBtn" onclick="switchToLogin()">Login</button>
+                    <button class="mode-btn" id="registerModeBtn" onclick="switchToRegister()">Register</button>
+                </div>
+                
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+                
+                <form id="authForm">
+                    <div class="form-group">
+                        <label class="form-label" for="username">Username</label>
+                        <input 
+                            type="text" 
+                            class="form-input" 
+                            id="username" 
+                            name="username" 
+                            required 
+                            autocomplete="username"
+                            placeholder="Enter your username"
+                        >
+                        <div style="font-size: 12px; color: #666; margin-top: 4px; display: none;" id="usernameHelp">3-20 characters, letters, numbers, and underscores only</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input 
+                            type="password" 
+                            class="form-input" 
+                            id="password" 
+                            name="password" 
+                            required 
+                            autocomplete="current-password"
+                            placeholder="Enter your password"
+                        >
+                        <div class="password-strength hidden" id="passwordStrength">
+                            <div class="strength-bar">
+                                <div class="strength-fill"></div>
+                            </div>
+                            <div style="margin-top: 4px; color: #666;">Password strength: <span id="strengthText">Enter a password</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group hidden" id="confirmPasswordGroup">
+                        <label class="form-label" for="confirmPassword">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            class="form-input" 
+                            id="confirmPassword" 
+                            name="confirmPassword"
+                            autocomplete="new-password"
+                            placeholder="Confirm your password"
+                        >
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="submitBtn">Sign In</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'login'; // 'login' or 'register'
+        
+        // Switch to login mode
+        function switchToLogin() {
+            currentMode = 'login';
+            
+            // Update UI elements
+            document.getElementById('formTitle').textContent = 'Welcome Back';
+            document.getElementById('formSubtitle').textContent = 'Sign in to access your desktop';
+            document.getElementById('windowTitle').textContent = 'My OS - Login';
+            document.getElementById('submitBtn').textContent = 'Sign In';
+            
+            // Update mode buttons
+            document.getElementById('loginModeBtn').classList.add('active');
+            document.getElementById('registerModeBtn').classList.remove('active');
+            
+            // Hide register-specific fields
+            document.getElementById('confirmPasswordGroup').classList.add('hidden');
+            document.getElementById('passwordStrength').classList.add('hidden');
+            document.getElementById('usernameHelp').style.display = 'none';
+            
+            // Update password field attributes
+            const passwordField = document.getElementById('password');
+            passwordField.setAttribute('autocomplete', 'current-password');
+            passwordField.setAttribute('placeholder', 'Enter your password');
+            passwordField.removeAttribute('minlength');
+            
+            // Update username field
+            const usernameField = document.getElementById('username');
+            usernameField.removeAttribute('minlength');
+            usernameField.removeAttribute('maxlength');
+            usernameField.removeAttribute('pattern');
+            
+            // Clear form
+            clearMessages();
+        }
+        
+        // Switch to register mode
+        function switchToRegister() {
+            currentMode = 'register';
+            
+            // Update UI elements
+            document.getElementById('formTitle').textContent = 'Join My OS';
+            document.getElementById('formSubtitle').textContent = 'Create your account to access the desktop';
+            document.getElementById('windowTitle').textContent = 'My OS - Register';
+            document.getElementById('submitBtn').textContent = 'Create Account';
+            
+            // Update mode buttons
+            document.getElementById('loginModeBtn').classList.remove('active');
+            document.getElementById('registerModeBtn').classList.add('active');
+            
+            // Show register-specific fields
+            document.getElementById('confirmPasswordGroup').classList.remove('hidden');
+            document.getElementById('passwordStrength').classList.remove('hidden');
+            document.getElementById('usernameHelp').style.display = 'block';
+            
+            // Update password field attributes
+            const passwordField = document.getElementById('password');
+            passwordField.setAttribute('autocomplete', 'new-password');
+            passwordField.setAttribute('placeholder', 'Create a strong password');
+            passwordField.setAttribute('minlength', '6');
+            
+            // Update username field for registration validation
+            const usernameField = document.getElementById('username');
+            usernameField.setAttribute('minlength', '3');
+            usernameField.setAttribute('maxlength', '20');
+            usernameField.setAttribute('pattern', '[a-zA-Z0-9_]+');
+            
+            // Update confirm password field
+            const confirmField = document.getElementById('confirmPassword');
+            confirmField.setAttribute('required', '');
+            
+            // Clear form
+            clearMessages();
+        }
+        
+        function clearMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // Password strength checker for register mode
+        function checkPasswordStrength(password) {
+            if (currentMode === 'login') return 5; // Skip for login mode
+            
+            let score = 0;
+            
+            if (password.length >= 8) score += 1;
+            if (/[a-z]/.test(password)) score += 1;
+            if (/[A-Z]/.test(password)) score += 1;
+            if (/[0-9]/.test(password)) score += 1;
+            if (/[^A-Za-z0-9]/.test(password)) score += 1;
+            
+            const strengthIndicator = document.getElementById('passwordStrength');
+            const strengthText = document.getElementById('strengthText');
+            
+            strengthIndicator.classList.remove('strength-weak', 'strength-medium', 'strength-strong');
+            
+            if (score <= 2) {
+                strengthIndicator.classList.add('strength-weak');
+                strengthText.textContent = 'Weak';
+            } else if (score <= 3) {
+                strengthIndicator.classList.add('strength-medium');
+                strengthText.textContent = 'Medium';
+            } else {
+                strengthIndicator.classList.add('strength-strong');
+                strengthText.textContent = 'Strong';
+            }
+            
+            return score;
+        }
+
+        // Form submission
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const submitBtn = document.getElementById('submitBtn');
+            const panda = document.getElementById('panda');
+            
+            // Clear previous messages
+            clearMessages();
+            
+            // Registration-specific validation
+            if (currentMode === 'register') {
+                if (password !== confirmPassword) {
+                    errorMessage.textContent = 'Passwords do not match';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+                
+                if (checkPasswordStrength(password) < 2) {
+                    errorMessage.textContent = 'Password is too weak. Please choose a stronger password.';
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+            }
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = currentMode === 'login' ? 'Signing In...' : 'Creating Account...';
+            panda.style.animation = 'bounce 0.5s ease infinite';
+            
+            try {
+                const endpoint = currentMode === 'login' ? '/api/login' : '/api/register';
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    panda.style.animation = 'none';
+                    panda.style.transform = 'scale(1.2)';
+                    
+                    if (currentMode === 'login') {
+                        // Login successful - redirect to desktop
+                        successMessage.textContent = 'Login successful! Redirecting to desktop...';
+                        successMessage.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            localStorage.setItem('token', data.token);
+                            window.location.href = '/client/public/desktop.html';
+                        }, 1000);
+                    } else {
+                        // Registration successful - switch to login mode
+                        successMessage.textContent = 'Account created successfully! You can now login.';
+                        successMessage.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            switchToLogin();
+                            document.getElementById('username').value = username;
+                            document.getElementById('password').value = '';
+                            panda.style.transform = 'scale(1)';
+                        }, 2000);
+                    }
+                } else {
+                    // Error handling
+                    panda.style.animation = 'shake 0.5s ease';
+                    errorMessage.textContent = data.error || (currentMode === 'login' ? 'Login failed' : 'Registration failed');
+                    errorMessage.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        panda.style.animation = 'none';
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('Authentication error:', error);
+                errorMessage.textContent = 'Connection error. Please try again.';
+                errorMessage.style.display = 'block';
+                panda.style.animation = 'shake 0.5s ease';
+                
+                setTimeout(() => {
+                    panda.style.animation = 'none';
+                }, 1000);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = currentMode === 'login' ? 'Sign In' : 'Create Account';
+            }
+        });
+
+        // Password input handling
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            if (currentMode === 'register' && password.length > 0) {
+                checkPasswordStrength(password);
+            }
+        });
+
+        // Confirm password validation for register mode
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            if (currentMode === 'register') {
+                const password = document.getElementById('password').value;
+                const confirmPassword = this.value;
+                
+                if (confirmPassword && password !== confirmPassword) {
+                    this.setCustomValidity('Passwords do not match');
+                    this.style.borderColor = '#f44336';
+                } else {
+                    this.setCustomValidity('');
+                    this.style.borderColor = '#e1e5e9';
+                }
+            }
+        });
+
+        // Username validation for register mode
+        document.getElementById('username').addEventListener('input', function() {
+            if (currentMode === 'register') {
+                const username = this.value;
+                const pattern = /^[a-zA-Z0-9_]+$/;
+                
+                if (username && !pattern.test(username)) {
+                    this.setCustomValidity('Username can only contain letters, numbers, and underscores');
+                    this.style.borderColor = '#f44336';
+                } else {
+                    this.setCustomValidity('');
+                    this.style.borderColor = '#e1e5e9';
+                }
+            }
+        });
+
+        // Panda animations
+        const panda = document.getElementById('panda');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+
+        usernameInput.addEventListener('focus', () => {
+            panda.classList.remove('covering-eyes');
+        });
+
+        usernameInput.addEventListener('input', () => {
+            if (usernameInput.value.length > 0) {
+                panda.style.transform = 'rotate(2deg)';
+                setTimeout(() => {
+                    panda.style.transform = 'rotate(-2deg)';
+                    setTimeout(() => {
+                        panda.style.transform = 'rotate(0deg)';
+                    }, 150);
+                }, 150);
+            }
+        });
+
+        passwordInput.addEventListener('focus', () => {
+            panda.classList.add('covering-eyes');
+        });
+
+        passwordInput.addEventListener('blur', () => {
+            setTimeout(() => {
+                panda.classList.remove('covering-eyes');
+            }, 500);
+        });
+
+        // Window controls
+        function closeWindow() {
+            if (confirm('Are you sure you want to close the application?')) {
+                window.close();
+            }
+        }
+
+        function minimizeWindow() {
+            // Simulate minimize animation
+            const window = document.getElementById('authWindow');
+            window.style.transform = 'scale(0.1) translateY(300px)';
+            window.style.opacity = '0';
+            setTimeout(() => {
+                window.style.transform = 'scale(1) translateY(0)';
+                window.style.opacity = '1';
+            }, 2000);
+        }
+
+        function maximizeWindow() {
+            const window = document.getElementById('authWindow');
+            if (window.style.width === '90vw') {
+                window.style.width = '420px';
+                window.style.height = 'auto';
+                window.style.borderRadius = '12px';
+            } else {
+                window.style.width = '90vw';
+                window.style.height = '90vh';
+                window.style.borderRadius = '0';
+            }
+        }
+
+        // Floating particles animation
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 6 + 's';
+            particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+            document.querySelector('.floating-particles').appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 8000);
+        }
+
+        // Create particles periodically
+        setInterval(createParticle, 800);
+
+        // Check if user is already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Verify token is still valid
+                fetch('/profile', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Token is valid, redirect to desktop
+                        window.location.href = '/client/public/desktop.html';
+                    } else {
+                        // Token expired, remove it
+                        localStorage.removeItem('token');
+                    }
+                })
+                .catch(() => {
+                    // Error checking token, remove it
+                    localStorage.removeItem('token');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
