@@ -355,6 +355,6 @@ If you find this project useful, please consider giving it a star ⭐ on GitHub!
 
 ---
 
-**Made with ❤️ by the My_OS Team**
+**Made By Shashank Shekhar**
 
 *Experience the future of web-based operating systems!*
